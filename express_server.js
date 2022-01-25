@@ -28,13 +28,13 @@ app.get("/urls", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); //Log the POST request body to the console
+  // console.log(req.body); //Log the POST request body to the console
   let randomURL = generateRandomString(); //generates a random string as the new random shortURL
   urlDatabase[randomURL] = req.body.longURL; //add the new key and value to the URLDatabase
   // console.log(urlDatabase);
 
-  res.redirect(`/urls/:${randomURL}`); //redirect to the new page
-})
+  res.redirect(`/urls/${randomURL}`); //redirect to the new page
+});
 
 // this route renders the urls_new template in the browser and displays the form to the user
 app.get("/urls/new", (req, res) => {
@@ -44,6 +44,11 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
+});
+
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
 });
 
 app.get("/hello", (req, res) => {
