@@ -29,12 +29,11 @@ app.get("/urls", (req, res) => {
 
 app.post("/urls", (req, res) => {
   console.log(req.body); //Log the POST request body to the console
-  let randomURL = generateRandomString();
-  urlDatabase[randomURL] = req.body.longURL;
-  console.log(urlDatabase);
+  let randomURL = generateRandomString(); //generates a random string as the new random shortURL
+  urlDatabase[randomURL] = req.body.longURL; //add the new key and value to the URLDatabase
+  // console.log(urlDatabase);
 
-  res.send(`${response.statusCode} Submission received! We will now redirect to...`);
-  // res.redirect(`/urls/${randomURL}`);
+  res.redirect(`/urls/:${randomURL}`); //redirect to the new page
 })
 
 // this route renders the urls_new template in the browser and displays the form to the user
