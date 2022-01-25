@@ -15,12 +15,15 @@
         <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
         <p class="card-text">Create a new URL: <a href="/u/<%= shortURL %>"><%= href="#" %></a></p>
       </div>
-      <h5 class="card-header text-center">Edit</h5>
-      <div class="form-group text-center">
-      <form class="form-inline text-center" action="/urls" method="POST">
+
+      <div class="card-header text-center">
+        <h5 class="card-title">Edit</h5>
+      <form class="form-inline" action="/urls" method="POST">
+        <div class="form-group mb-2">
           <label for="longURL">New URL:</label>
           <input class="form-control" type="text" name="longURL" placeholder="http://" style="width: 300px; margin: 1em">
           <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
       </form>
       </div>
     <div class="card-footer text-muted"></div>
