@@ -47,7 +47,12 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  let longURL = urlDatabase[req.params.shortURL];
+
+  if (!longURL.includes("http://")) { //edge case?? user may just enter a www link instead of a http://www link
+    longURL = "http://" + longURL;
+  };
+
   res.redirect(longURL);
 });
 
