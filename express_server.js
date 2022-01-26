@@ -16,7 +16,13 @@ let urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-let users = {};
+let users = {
+  "userRandomID": {
+    id: "userRandomID",
+    email: "user@user.com",
+    password: "hello"
+  }
+};
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -28,7 +34,7 @@ app.get("/urls.json", (req, res) => {
 
 // route added for /urls
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies['username'] };
+  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
   res.render("urls_index", templateVars); //passes the url data to our template
 });
 
@@ -50,8 +56,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.get("/urls/:shortURL/update", (req, res) => {
   let shortURL = req.params.shortURL;
   let longURL = urlDatabase[shortURL];
-  let username = req.cookies['username'];
-  const templateVars = { shortURL, longURL, username: username };
+  const templateVars = { shortURL, longURL, user: users[req.cookies["user_id"]] };
   res.render("urls_show", templateVars);
 });
 
@@ -66,13 +71,13 @@ app.post("/urls/:shortURL/update", (req, res) => {
 
 // this route renders the urls_new template in the browser and displays the form to the user
 app.get("/urls/new", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let username = req.cookies["username"];
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username };
+
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["user_id"]] };
   res.render("urls_show", templateVars);
 });
 
@@ -89,31 +94,30 @@ app.get("/u/:shortURL", (req, res) => {
 
 // POST route (login) receives a username input from the user and defines it. Then redirect back to our homepage
 app.post("/login", (req, res) => {
-  let username = req.body.username;
-  res.cookie("username", username);
+  
+  console.log(req.body.username);
   res.redirect("/urls");
 });
 
 // POST route (logout) clears the cookie variable and redirects back to the homepage
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");
 });
 
 // GET route takes users to the registration page 
 app.get("/register", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]]};
+  console.log("user_id:", req.cookies["user_id"]);
   res.render("urls_registration", templateVars);
 });
 
 app.post("/register", (req, res) => {
   let newUserID = generateRandomString();
-  res.cookie("user_id", newUserID);
-  console.log(req.cookies);
-
   const email = req.body.email;
   const password = req.body.password;
   users[newUserID] = { id: newUserID, email, password };
+  res.cookie("user_id", newUserID);
   res.redirect("/urls");
 });
 
