@@ -119,7 +119,5 @@ function generateRandomString() {
     let output = Math.floor(Math.random() * numCharSet.length);
     randomStr += numCharSet.substring(output, output + 1);
   }
-  //  console.log(randomStr);
   return randomStr;
 };
-// console.log(generateRandomString());
