@@ -98,7 +98,8 @@ app.post("/logout", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  res.render("/urls_registration");
+  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  res.render("urls_registration", templateVars);
 });
 
 app.get("/hello", (req, res) => {
