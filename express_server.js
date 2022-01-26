@@ -57,8 +57,7 @@ app.get("/urls/:shortURL/update", (req, res) => {
 app.post("/urls/:shortURL/update", (req, res) => {
   let shortURL = req.params.shortURL; //short URL here gets the existing shortURL (of the one that the user wants to update)
   let newLongURL = req.body.longURL; //getting the input of the new url from the user
-  let username = req.cookies['username'];
-  urlDatabase = { ...urlDatabase, [shortURL]: newLongURL, username }; //will update the urlDatabase with the newLongURL, and we can see it updated since the get route has rendered the page above
+  urlDatabase = { ...urlDatabase, [shortURL]: newLongURL }; //will update the urlDatabase with the newLongURL, and we can see it updated since the get route has rendered the page above
   res.redirect("/urls");
 });
 
@@ -90,6 +89,11 @@ app.post("/login", (req, res) => {
   res.cookie("username", username);
   res.redirect("/urls");
 });
+
+app.post("/logout", (req, res) => {
+  res.clearCookie("username");
+  res.redirect("/urls");
+})
 
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
