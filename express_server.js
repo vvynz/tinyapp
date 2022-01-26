@@ -84,12 +84,14 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
+// POST route (login) receives a username input from the user and defines it. Then redirect back to our homepage
 app.post("/login", (req, res) => {
   let username = req.body.username;
   res.cookie("username", username);
   res.redirect("/urls");
 });
 
+// POST route (logout) clears the cookie variable and redirects back to the homepage
 app.post("/logout", (req, res) => {
   res.clearCookie("username");
   res.redirect("/urls");
