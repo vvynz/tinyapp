@@ -26,7 +26,7 @@ app.get("/urls.json", (req, res) => {
 
 // route added for /urls
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { urls: urlDatabase, username: req.cookies['username'] };
   res.render("urls_index", templateVars); //passes the url data to our template
 });
 
@@ -48,7 +48,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.get("/urls/:shortURL/update", (req, res) => {
   let shortURL = req.params.shortURL;
   let longURL = urlDatabase[shortURL];
-  const templateVars = { shortURL, longURL };
+  let username = req.cookies['username'];
+  const templateVars = { shortURL, longURL, username: username };
   res.render("urls_show", templateVars);
 });
 
@@ -56,18 +57,21 @@ app.get("/urls/:shortURL/update", (req, res) => {
 app.post("/urls/:shortURL/update", (req, res) => {
   let shortURL = req.params.shortURL; //short URL here gets the existing shortURL (of the one that the user wants to update)
   let newLongURL = req.body.longURL; //getting the input of the new url from the user
-  urlDatabase = { ...urlDatabase, [shortURL]: newLongURL }; //will update the urlDatabase with the newLongURL, and we can see it updated since the get route has rendered the page above
+  let username = req.cookies['username'];
+  urlDatabase = { ...urlDatabase, [shortURL]: newLongURL, username }; //will update the urlDatabase with the newLongURL, and we can see it updated since the get route has rendered the page above
   res.redirect("/urls");
 });
 
 
 // this route renders the urls_new template in the browser and displays the form to the user
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  let username = req.cookies["username"];
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username };
   res.render("urls_show", templateVars);
 });
 
@@ -83,8 +87,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.post("/login", (req, res) => {
   let username = req.body.username;
-  res.cookie("Username", username);
-  console.log("Username:", username);
+  res.cookie("username", username);
   res.redirect("/urls");
 });
 
