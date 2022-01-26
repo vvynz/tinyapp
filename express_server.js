@@ -8,6 +8,9 @@ const bodyParser = require("body-parser"); //bodyParser is need to make certain 
 const { response } = require("express");
 app.use(bodyParser.urlencoded({extended: true}));
 
+var cookieParser = require('cookie-parser');
+app.use(cookieParser());
+
 let urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -76,6 +79,13 @@ app.get("/u/:shortURL", (req, res) => {
   };
 
   res.redirect(longURL);
+});
+
+app.post("/login", (req, res) => {
+  let username = req.body.username;
+  res.cookie("Username", username);
+  console.log("Username:", username);
+  res.redirect("/urls");
 });
 
 app.get("/hello", (req, res) => {
