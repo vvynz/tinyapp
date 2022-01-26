@@ -16,6 +16,8 @@ let urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+let users = {};
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -74,6 +76,7 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+
 app.get("/u/:shortURL", (req, res) => {
   let longURL = urlDatabase[req.params.shortURL];
 
@@ -97,9 +100,21 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
+// GET route takes users to the registration page 
 app.get("/register", (req, res) => {
   const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
   res.render("urls_registration", templateVars);
+});
+
+app.post("/register", (req, res) => {
+  let newUserID = generateRandomString();
+  res.cookie("user_id", newUserID);
+  console.log(req.cookies);
+
+  const email = req.body.email;
+  const password = req.body.password;
+  users[newUserID] = { id: newUserID, email, password };
+  res.redirect("/urls");
 });
 
 app.get("/hello", (req, res) => {
