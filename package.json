@@ -19,7 +19,9 @@
   },
   "homepage": "https://github.com/vvynz/tinyapp#readme",
   "dependencies": {
+    "body-parser": "^1.19.1",
     "cookie-parser": "^1.4.6",
+    "ejs": "^2.6.1",
     "express": "^4.17.2"
   },
   "devDependencies": {
