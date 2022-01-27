@@ -12,8 +12,14 @@ var cookieParser = require('cookie-parser');
 app.use(cookieParser());
 
 let urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "aJ48lW"
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: "aJ48lW"
+  }
 };
 
 let users = {
@@ -34,16 +40,24 @@ app.get("/urls.json", (req, res) => {
 
 // route added for /urls
 app.get("/urls", (req, res) => {
+  // let shortURL = ;
+  // let longURL = urlDatabase;
+  
   const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
+  // console.log(urlDatabase["b2xVn2"]);
+
   res.render("urls_index", templateVars); //passes the url data to our template
 });
 
 app.post("/urls", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    return res.send("Sorry you need to be logged in!");
+  };
   // console.log(req.body); //Log the POST request body to the console
   const randomURL = generateRandomString(); //generates a random string as the new random shortURL
-  urlDatabase[randomURL] = req.body.longURL; //add the new key and value to the URLDatabase
-  // console.log(urlDatabase);
-
+  const userID = req.cookies["user_id"];
+  urlDatabase[randomURL] = { userID, longURL:req.body.longURL }; //add the new key and value to the URLDatabase
+  
   res.redirect(`/urls/${randomURL}`); //redirect to the new page
 });
 
@@ -55,7 +69,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 // get route will render the update page
 app.get("/urls/:shortURL/update", (req, res) => {
   let shortURL = req.params.shortURL;
-  let longURL = urlDatabase[shortURL];
+  let longURL = urlDatabase[shortURL].longURL;
   const templateVars = { shortURL, longURL, user: users[req.cookies["user_id"]] };
   res.render("urls_show", templateVars);
 });
@@ -64,26 +78,36 @@ app.get("/urls/:shortURL/update", (req, res) => {
 app.post("/urls/:shortURL/update", (req, res) => {
   let shortURL = req.params.shortURL; //short URL here gets the existing shortURL (of the one that the user wants to update)
   let newLongURL = req.body.longURL; //getting the input of the new url from the user
-  urlDatabase = { ...urlDatabase, [shortURL]: newLongURL }; //will update the urlDatabase with the newLongURL, and we can see it updated since the get route has rendered the page above
+  // urlDatabase = { ...urlDatabase, [shortURL]: newLongURL }; //will update the urlDatabase with the newLongURL, and we can see it updated since the get route has rendered the page above
+  urlDatabase[shortURL].longURL = newLongURL;
+
   res.redirect("/urls");
 });
 
 
 // this route renders the urls_new template in the browser and displays the form to the user
 app.get("/urls/new", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    return res.send("Sorry! You need to be logged in!");
+  };
+
   const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
 
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["user_id"]] };
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.cookies["user_id"]] };
   res.render("urls_show", templateVars);
 });
 
 
 app.get("/u/:shortURL", (req, res) => {
-  let longURL = urlDatabase[req.params.shortURL];
+  if (!Object.keys(urlDatabase).includes(req.params.shortURL)) {
+    return res.send("<h3>Sorry that short url doesn't exist!</h3>");
+  };
+
+  let longURL = urlDatabase[req.params.shortURL].longURL;
 
   if (!longURL.includes("http://")) { //edge case?? user may just enter a www link instead of a http://www link
     longURL = "http://" + longURL;
@@ -94,8 +118,12 @@ app.get("/u/:shortURL", (req, res) => {
 
 // GET login route. Renders a login page to the user
 app.get("/login", (req, res) => {
-  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
-  res.render("urls_login", templateVars);
+  if (req.cookies["user_id"]) {
+    res.redirect("/urls");
+  } else {
+    const templateVars = { user: null };
+    res.render("urls_login", templateVars);
+  }
 });
 
 // POST route (login) receives an email and password from the user
@@ -114,11 +142,11 @@ app.post("/login", (req, res) => {
 
   // if email matches with a user, compare that the password on file matches with the existing user's password saved. If it doesn't match, return 403 status code
   if (user) {
-    if (users[req.cookies["user_id"]].password !== password ) {
+    if (user.password !== password ) {
       return res.status(403).send("403 Error: The password doesn't match with what we have on file!");
     } else {
       // if both email and passwords match, set user_id cookie as the user's random id.
-      req.cookies["user_id"] = user.id;
+      res.cookie("user_id", user.id);
     };
   };
 
@@ -133,8 +161,12 @@ app.post("/logout", (req, res) => {
 
 // GET route takes users to the registration page 
 app.get("/register", (req, res) => {
-  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]]};
-  res.render("urls_registration", templateVars);
+  if (req.cookies["user_id"]) {
+    res.redirect("/urls");
+  } else {
+    const templateVars = { user:null };
+    res.render("urls_registration", templateVars);
+  }
 });
 
 app.post("/register", (req, res) => {
@@ -154,8 +186,8 @@ app.post("/register", (req, res) => {
     users[newUserID] = { id: newUserID, email, password };
   };
   
-  users[newUserID] = { id: newUserID, email, password };
-  // console.log("REGISTERED USER ID:", users[newUserID]);
+  // users[newUserID] = { id: newUserID, email, password };
+  
   res.cookie("user_id", newUserID);
   res.redirect("/urls");
 });
