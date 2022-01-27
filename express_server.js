@@ -102,7 +102,26 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  
+  // uses new email & password fields and sets appropriate user_id cookie on successful login
+
+
+  // if user with an email that can't be found, return a 403 status code
+  const user = isUserEmailTaken(email);
+
+  if (user === false) {
+    return res.status(403).send("403 Error: Sorry a user with that email doesn't exist!");
+  };
+
+  // if email matches with a user, compare that the password on file matches with the existing user's password saved. If it doesn't match, return 403 status code
+  if (user) {
+    if (users[req.cookies["user_id"]].password !== password ) {
+      return res.status(403).send("403 Error: The password doesn't match with what we have on file!");
+    } else {
+      // if both email and passwords match, set user_id cookie as the user's random id.
+      req.cookies["user_id"] = user.id;
+    };
+  };
+
   res.redirect("/urls");
 });
 
@@ -134,10 +153,9 @@ app.post("/register", (req, res) => {
     // if isUserEmailTaken is false, save the email and new user into our users obj, save the user_id as a cookie and redirect back to /urls
     users[newUserID] = { id: newUserID, email, password };
   };
-
   
   users[newUserID] = { id: newUserID, email, password };
-  // console.log(users[newUserID]);
+  // console.log("REGISTERED USER ID:", users[newUserID]);
   res.cookie("user_id", newUserID);
   res.redirect("/urls");
 });
@@ -154,7 +172,6 @@ function isUserEmailTaken(userEmail) {
   let userIDS = Object.keys(users);
   for (let userID of userIDS) {
     if (users[userID].email === userEmail) {
-      // console.log(users[userID]);
       return users[userID];
     }
   }
