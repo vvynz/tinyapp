@@ -108,7 +108,6 @@ app.post("/logout", (req, res) => {
 // GET route takes users to the registration page 
 app.get("/register", (req, res) => {
   const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]]};
-  console.log("user_id:", req.cookies["user_id"]);
   res.render("urls_registration", templateVars);
 });
 
@@ -116,7 +115,22 @@ app.post("/register", (req, res) => {
   let newUserID = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+ 
+  if (!email || !password) { //if no email or password are entered
+    res.status(400).send("Please enter in an email and a password!");
+  };
+
+  // if isUserEmailTaken is true redirect to error page
+  if (isUserEmailTaken(email)) {
+    return res.status(400).send("That email is already registered!");
+  } else {
+    // if isUserEmailTaken is false, save the email and new user into our users obj, save the user_id as a cookie and redirect back to /urls
+    users[newUserID] = { id: newUserID, email, password };
+  };
+
+  
   users[newUserID] = { id: newUserID, email, password };
+  // console.log(users[newUserID]);
   res.cookie("user_id", newUserID);
   res.redirect("/urls");
 });
@@ -128,6 +142,17 @@ app.get("/hello", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
+function isUserEmailTaken(userEmail) {
+  let userIDS = Object.keys(users);
+  for (let userID of userIDS) {
+    if (users[userID].email === userEmail) {
+      // console.log(users[userID]);
+      return users[userID];
+    }
+  }
+  return false;
+};
 
 function generateRandomString() {
   const numCharSet = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
