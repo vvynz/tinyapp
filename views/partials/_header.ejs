@@ -12,10 +12,10 @@
     </div>
 
     <% if(user){ %> -->
+      <label class="p-2" for="logout button text-center">Logged in as: <%= user.email %></label>
     <form class="form-inline" action="/logout" method="POST">
-        <label class="p-2" for="logout button text-center">Logged in as: <%= user.email %></label>
-        <button type="submit" class="btn btn-outline-dark">Logout</button>
-      </form> 
+      <button type="submit" class="btn btn-outline-dark">Logout</button>
+    </form> 
     <% }else{ %> 
       <form class="form p-2" action="/login" method="GET">
         <button type="submit" class="btn btn-outline-dark">Login</button>
