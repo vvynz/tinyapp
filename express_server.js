@@ -87,6 +87,7 @@ app.post("/urls/:shortURL/update", (req, res) => {
 
 // this route renders the urls_new template in the browser and displays the form to the user
 app.get("/urls/new", (req, res) => {
+  // if a user doesn't exist, or isn't logged in and they try to access this page, they'll be redirected to the error page
   if (!req.cookies["user_id"]) {
     return res.send("Sorry! You need to be logged in!");
   };
@@ -103,6 +104,7 @@ app.get("/urls/:shortURL", (req, res) => {
 
 
 app.get("/u/:shortURL", (req, res) => {
+  // if the shortURL id doesn't exist, users will see an error page
   if (!Object.keys(urlDatabase).includes(req.params.shortURL)) {
     return res.send("<h3>Sorry that short url doesn't exist!</h3>");
   };
@@ -118,7 +120,8 @@ app.get("/u/:shortURL", (req, res) => {
 
 // GET login route. Renders a login page to the user
 app.get("/login", (req, res) => {
-  if (req.cookies["user_id"]) {
+  // if a user isn't logged in, they'll be redirected back to /urls
+  if (!req.cookies["user_id"]) {
     res.redirect("/urls");
   } else {
     const templateVars = { user: null };
@@ -161,7 +164,8 @@ app.post("/logout", (req, res) => {
 
 // GET route takes users to the registration page 
 app.get("/register", (req, res) => {
-  if (req.cookies["user_id"]) {
+  // if a there's a user that hasn't been registered, they'll be redirected to the /urls homepage
+  if (!req.cookies["user_id"]) {
     res.redirect("/urls");
   } else {
     const templateVars = { user:null };
@@ -185,8 +189,6 @@ app.post("/register", (req, res) => {
     // if isUserEmailTaken is false, save the email and new user into our users obj, save the user_id as a cookie and redirect back to /urls
     users[newUserID] = { id: newUserID, email, password };
   };
-  
-  // users[newUserID] = { id: newUserID, email, password };
   
   res.cookie("user_id", newUserID);
   res.redirect("/urls");
