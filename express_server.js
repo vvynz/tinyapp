@@ -92,10 +92,17 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
-// POST route (login) receives a username input from the user and defines it. Then redirect back to our homepage
+// GET login route. Renders a login page to the user
+app.get("/login", (req, res) => {
+  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
+  res.render("urls_login", templateVars);
+});
+
+// POST route (login) receives an email and password from the user
 app.post("/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
   
-  console.log(req.body.username);
   res.redirect("/urls");
 });
 
