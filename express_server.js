@@ -40,13 +40,26 @@ app.get("/urls.json", (req, res) => {
 
 // route added for /urls
 app.get("/urls", (req, res) => {
-  // let shortURL = ;
-  // let longURL = urlDatabase;
-  
-  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
-  // console.log(urlDatabase["b2xVn2"]);
 
+  if (!req.cookies["user_id"]) {
+    return res.send("<h2>Sorry you need to be logged in!</h2>");
+  }
+
+  const id = req.cookies["user_id"];
+
+  const userURLs = urlsForUser(id);
+
+  // if (loggedInUser === false) {
+  //   // if the URLs matched to the :id doesn't belong to them, error page
+    
+  
+  //   return res.send("<h2>Error: Please login first!</h2>")
+  // };
+
+  // if the URLs match to the id, then render the page with their URLs
+  const templateVars = { urls: userURLs, user: users[req.cookies["user_id"]] };
   res.render("urls_index", templateVars); //passes the url data to our template
+    
 });
 
 app.post("/urls", (req, res) => {
@@ -56,12 +69,21 @@ app.post("/urls", (req, res) => {
   // console.log(req.body); //Log the POST request body to the console
   const randomURL = generateRandomString(); //generates a random string as the new random shortURL
   const userID = req.cookies["user_id"];
-  urlDatabase[randomURL] = { userID, longURL:req.body.longURL }; //add the new key and value to the URLDatabase
+  urlDatabase[randomURL] = { longURL:req.body.longURL, userID }; //add the new key and value to the URLDatabase
   
   res.redirect(`/urls/${randomURL}`); //redirect to the new page
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
+  let shortURL = req.params.shortURL;
+  const userID = req.cookies["user_id"];
+
+  const userURLs = urlsForUser(userID);
+
+  if (!Object.keys(userURLs).includes(req.params.shortURL)) {
+    return res.send("Sorry you cannot delete these URLs. Please login first!");
+  }
+
   delete urlDatabase[req.params.shortURL]; //should delete the resource
   res.redirect("/urls"); //after deleting, redirects back to the index page
 });
@@ -76,6 +98,14 @@ app.get("/urls/:shortURL/update", (req, res) => {
 
 // post route will take us to the update page and allow the user to update an existing link to a new one
 app.post("/urls/:shortURL/update", (req, res) => {
+  const userID = req.cookies["user_id"];
+
+  const userURLs = urlsForUser(userID);
+
+  if (!Object.keys(userURLs).includes(req.params.shortURL)) {
+    return res.send("Sorry you cannot edit these URLs. Please login to your account first!");
+  }
+
   let shortURL = req.params.shortURL; //short URL here gets the existing shortURL (of the one that the user wants to update)
   let newLongURL = req.body.longURL; //getting the input of the new url from the user
   // urlDatabase = { ...urlDatabase, [shortURL]: newLongURL }; //will update the urlDatabase with the newLongURL, and we can see it updated since the get route has rendered the page above
@@ -97,6 +127,15 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    return res.send("<h2>Sorry you need to be logged in!</h2>");
+  }
+
+  const userURLs = urlsForUser(req.cookies["user_id"]);
+  
+  if (!Object.keys(userURLs).includes(req.params.shortURL)) {
+    return res.send("<h2>Sorry this short url is not yours!!</h2>");
+  }
 
   let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.cookies["user_id"]] };
   res.render("urls_show", templateVars);
@@ -121,7 +160,7 @@ app.get("/u/:shortURL", (req, res) => {
 // GET login route. Renders a login page to the user
 app.get("/login", (req, res) => {
   // if a user isn't logged in, they'll be redirected back to /urls
-  if (!req.cookies["user_id"]) {
+  if (req.cookies["user_id"]) {
     res.redirect("/urls");
   } else {
     const templateVars = { user: null };
@@ -133,8 +172,6 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  // uses new email & password fields and sets appropriate user_id cookie on successful login
-
 
   // if user with an email that can't be found, return a 403 status code
   const user = isUserEmailTaken(email);
@@ -164,8 +201,8 @@ app.post("/logout", (req, res) => {
 
 // GET route takes users to the registration page 
 app.get("/register", (req, res) => {
-  // if a there's a user that hasn't been registered, they'll be redirected to the /urls homepage
-  if (!req.cookies["user_id"]) {
+  // if a there's a user that hasn't been registered, they'll be directed to the registration page
+  if (req.cookies["user_id"]) {
     res.redirect("/urls");
   } else {
     const templateVars = { user:null };
@@ -202,6 +239,18 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+// a function that returns a user's URLs where the userID is the same to the id of the currently logged in user
+function urlsForUser(ID) {
+  let userURLs = {};
+  for (let shortURL in urlDatabase) {
+    if(urlDatabase[shortURL].userID === ID) {
+      userURLs[shortURL] = { longURL: urlDatabase[shortURL].longURL };
+    }  
+  }
+  return userURLs;
+};
+
+// a function that checks whether an email exists in our database
 function isUserEmailTaken(userEmail) {
   let userIDS = Object.keys(users);
   for (let userID of userIDS) {
@@ -212,6 +261,7 @@ function isUserEmailTaken(userEmail) {
   return false;
 };
 
+// a function that generates a random string
 function generateRandomString() {
   const numCharSet = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const length = 6;
