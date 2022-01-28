@@ -8,6 +8,8 @@ const bodyParser = require("body-parser"); //bodyParser is need to make certain 
 const { response } = require("express");
 app.use(bodyParser.urlencoded({extended: true}));
 
+const bcrypt = require('bcryptjs');
+
 var cookieParser = require('cookie-parser');
 app.use(cookieParser());
 
@@ -26,7 +28,7 @@ let users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@user.com",
-    password: "hello"
+    password: bcrypt.hashSync("hello", 10),
   }
 };
 
@@ -181,14 +183,11 @@ app.post("/login", (req, res) => {
   };
 
   // if email matches with a user, compare that the password on file matches with the existing user's password saved. If it doesn't match, return 403 status code
-  if (user) {
-    if (user.password !== password ) {
-      return res.status(403).send("403 Error: The password doesn't match with what we have on file!");
-    } else {
-      // if both email and passwords match, set user_id cookie as the user's random id.
-      res.cookie("user_id", user.id);
-    };
-  };
+  if (user && bcrypt.compareSync(password, user.password)) {
+    res.cookie("user_id", user.id);
+  } else {
+    return res.status(403).send("403 Error: The password doesn't match with what we have on file!");
+  }
 
   res.redirect("/urls");
 });
@@ -213,7 +212,7 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   let newUserID = generateRandomString();
   const email = req.body.email;
-  const password = req.body.password;
+  let password = req.body.password;
  
   if (!email || !password) { //if no email or password are entered
     res.status(400).send("Please enter in an email and a password!");
@@ -224,7 +223,7 @@ app.post("/register", (req, res) => {
     return res.status(400).send("That email is already registered!");
   } else {
     // if isUserEmailTaken is false, save the email and new user into our users obj, save the user_id as a cookie and redirect back to /urls
-    users[newUserID] = { id: newUserID, email, password };
+    users[newUserID] = { id: newUserID, email, password: bcrypt.hashSync(password, 10) }; //hashing the password
   };
   
   res.cookie("user_id", newUserID);
