@@ -6,7 +6,7 @@ function getUserByEmail(userEmail, users) {
       return users[userID];
     }
   }
-  return false;
+  return undefined;
 };
 
 // a function that returns a user's URLs where the userID is the same to the id of the currently logged in user
@@ -20,7 +20,7 @@ function urlsForUser(ID, urlDatabase) {
   return userURLs;
 };
 
-// a function that generates a random string
+// a function that generates a random 6 character string
 function generateRandomString() {
   const numCharSet = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const length = 6;
