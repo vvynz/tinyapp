@@ -11,6 +11,11 @@
 <body>
   <%- include('partials/_header') %>
   <main style="margin: 1em;">
+    <% if (!user) { %>
+    <div class="alert alert-warning" role="alert">
+      <h3>You'll need to <a href="/login">login</a> first! Or <a href="/register">register</a> if you haven't yet!</h3>
+    </div>
+    <% } else if(user) { %>
     <h3>My URLs</h3>
      <table class="table">
       <thead>
@@ -31,6 +36,7 @@
           </tr>
         <% } %>
       </tbody>
+    <% } %>
     </table>
   </main>
   <!-- Bootstrap JS -->
