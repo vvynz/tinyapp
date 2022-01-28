@@ -9,4 +9,4 @@ function getUserByEmail(userEmail, users) {
   return false;
 };
 
-module.exports = getUserByEmail;
+module.exports = { getUserByEmail };
