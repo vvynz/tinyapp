@@ -2,7 +2,7 @@ const cookieSession = require('cookie-session')
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
-const getUserByEmail = require("./helpers");
+const { getUserByEmail, generateRandomString, urlsForUser } = require("./helpers");
 
 app.set("view engine", "ejs"); //sets ejs as the view(templating) engine
 
@@ -53,25 +53,17 @@ app.get("/urls.json", (req, res) => {
 
 // route added for /urls
 app.get("/urls", (req, res) => {
-  if (!req.session.user_id) {
-    return res.send("<h2>Sorry you need to be logged in!</h2>");
-  }
-
   const id = req.session.user_id;
-
-  const userURLs = urlsForUser(id);
+  // const userURLs = urlsForUser(id, urlDatabase);
 
   // if the URLs match to the id, then render the page with their URLs
-  const templateVars = { urls: userURLs, user: users[req.session.user_id] };
+  const templateVars = { urls: urlDatabase, user: users[id] };
   res.render("urls_index", templateVars); //passes the url data to our template
     
 });
 
 app.post("/urls", (req, res) => {
-  if (!req.session.user_id) {
-    return res.send("Sorry you need to be logged in!");
-  };
-
+ 
   const randomURL = generateRandomString(); //generates a random string as the new random shortURL
   const userID = req.session.user_id;
   urlDatabase[randomURL] = { longURL:req.body.longURL, userID }; //add the new key and value to the URLDatabase
@@ -101,7 +93,7 @@ app.get("/urls/:shortURL", (req, res) => {
     return res.send("<h2>Sorry you need to be logged in!</h2>");
   }
 
-  const userURLs = urlsForUser(userID);
+  const userURLs = urlsForUser(userID, urlDatabase);
   // if a user is accessing another user's urls page, will be directed to this error message
   if (!Object.keys(userURLs).includes(req.params.shortURL)) {
     return res.send("<h2>Sorry access denied! Please make sure you're logged into your account!</h2>");
@@ -129,9 +121,10 @@ app.get("/u/:shortURL", (req, res) => {
 
 // GET route will render the short urls page
 app.get("/urls/:shortURL/update", (req, res) => {
-  let shortURL = req.params.shortURL;
-  let longURL = urlDatabase[shortURL].longURL;
-  const templateVars = { shortURL, longURL, user: users[req.session.user_id] };
+  const userID = req.session.user_id;
+  const shortURL = req.params.shortURL;
+  const longURL = urlDatabase[shortURL].longURL;
+  const templateVars = { shortURL, longURL, user: users[userID] };
   res.render("urls_show", templateVars);
 });
 
@@ -142,7 +135,7 @@ app.post("/urls/:shortURL/update", (req, res) => {
   urlDatabase[shortURL].longURL = newLongURL; //updated urls will be displayed
   const userID = req.session.user_id;
 
-  const userURLs = urlsForUser(userID);
+  const userURLs = urlsForUser(userID, urlDatabase);
   //For any user who isn't logged in and tries to update another user's short urls page, they'll see this error message
   if (!Object.keys(userURLs).includes(shortURL)) {
     return res.send("Sorry permission denied. Please login to your account first!");
@@ -156,7 +149,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
   const userID = req.session.user_id;
 
-  const userURLs = urlsForUser(userID);
+  const userURLs = urlsForUser(userID, urlDatabase);
 
   // if the shortURL isn't found in the logged in user's own URLs database, they'll be shown an error message
   if (!Object.keys(userURLs).includes(shortURL)) {
@@ -243,28 +236,3 @@ app.post("/register", (req, res) => {
   req.session.user_id = newUserID;
   res.redirect("/urls");
 });
-
-// a function that returns a user's URLs where the userID is the same to the id of the currently logged in user
-function urlsForUser(ID) {
-  let userURLs = {};
-  for (let shortURL in urlDatabase) {
-    if(urlDatabase[shortURL].userID === ID) {
-      userURLs[shortURL] = { longURL: urlDatabase[shortURL].longURL };
-    }  
-  }
-  return userURLs;
-};
-
-
-// a function that generates a random string
-function generateRandomString() {
-  const numCharSet = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  const length = 6;
-  let randomStr = "";
-
-  for (let i = 0; i < length; i++) {
-    let output = Math.floor(Math.random() * numCharSet.length);
-    randomStr += numCharSet.substring(output, output + 1);
-  }
-  return randomStr;
-};
