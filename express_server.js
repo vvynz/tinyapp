@@ -1,3 +1,4 @@
+const cookieSession = require('cookie-session')
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -7,11 +8,12 @@ app.set("view engine", "ejs"); //sets ejs as the view(templating) engine
 const bodyParser = require("body-parser"); //bodyParser is need to make certain data readable to humans.
 const { response } = require("express");
 app.use(bodyParser.urlencoded({extended: true}));
-
 const bcrypt = require('bcryptjs');
 
-var cookieParser = require('cookie-parser');
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ["18bb8256-6b75-49d5-828f-0f17e88dd1a2", "8e1724f3-a847-4693-a2a4-b8d11e5ef825" ],
+}))
 
 let urlDatabase = {
   "b2xVn2": {
@@ -43,34 +45,27 @@ app.get("/urls.json", (req, res) => {
 // route added for /urls
 app.get("/urls", (req, res) => {
 
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     return res.send("<h2>Sorry you need to be logged in!</h2>");
   }
 
-  const id = req.cookies["user_id"];
+  const id = req.session.user_id;
 
   const userURLs = urlsForUser(id);
 
-  // if (loggedInUser === false) {
-  //   // if the URLs matched to the :id doesn't belong to them, error page
-    
-  
-  //   return res.send("<h2>Error: Please login first!</h2>")
-  // };
-
   // if the URLs match to the id, then render the page with their URLs
-  const templateVars = { urls: userURLs, user: users[req.cookies["user_id"]] };
+  const templateVars = { urls: userURLs, user: users[req.session.user_id] };
   res.render("urls_index", templateVars); //passes the url data to our template
     
 });
 
 app.post("/urls", (req, res) => {
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     return res.send("Sorry you need to be logged in!");
   };
   // console.log(req.body); //Log the POST request body to the console
   const randomURL = generateRandomString(); //generates a random string as the new random shortURL
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   urlDatabase[randomURL] = { longURL:req.body.longURL, userID }; //add the new key and value to the URLDatabase
   
   res.redirect(`/urls/${randomURL}`); //redirect to the new page
@@ -78,15 +73,16 @@ app.post("/urls", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   let shortURL = req.params.shortURL;
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
 
   const userURLs = urlsForUser(userID);
 
-  if (!Object.keys(userURLs).includes(req.params.shortURL)) {
+  // if the shortURL isn't found in the logged in user's own URLs database, they'll be shown an error message
+  if (!Object.keys(userURLs).includes(shortURL)) {
     return res.send("Sorry you cannot delete these URLs. Please login first!");
   }
 
-  delete urlDatabase[req.params.shortURL]; //should delete the resource
+  delete urlDatabase[shortURL]; //should delete the shortURL resource
   res.redirect("/urls"); //after deleting, redirects back to the index page
 });
 
@@ -94,13 +90,13 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.get("/urls/:shortURL/update", (req, res) => {
   let shortURL = req.params.shortURL;
   let longURL = urlDatabase[shortURL].longURL;
-  const templateVars = { shortURL, longURL, user: users[req.cookies["user_id"]] };
+  const templateVars = { shortURL, longURL, user: users[req.session.user_id] };
   res.render("urls_show", templateVars);
 });
 
 // post route will take us to the update page and allow the user to update an existing link to a new one
 app.post("/urls/:shortURL/update", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
 
   const userURLs = urlsForUser(userID);
 
@@ -120,26 +116,26 @@ app.post("/urls/:shortURL/update", (req, res) => {
 // this route renders the urls_new template in the browser and displays the form to the user
 app.get("/urls/new", (req, res) => {
   // if a user doesn't exist, or isn't logged in and they try to access this page, they'll be redirected to the error page
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     return res.send("Sorry! You need to be logged in!");
   };
 
-  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
+  const templateVars = { urls: urlDatabase, user: users[req.session.user_id] };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     return res.send("<h2>Sorry you need to be logged in!</h2>");
   }
 
-  const userURLs = urlsForUser(req.cookies["user_id"]);
+  const userURLs = urlsForUser(req.session.user_id);
   
   if (!Object.keys(userURLs).includes(req.params.shortURL)) {
     return res.send("<h2>Sorry this short url is not yours!!</h2>");
   }
 
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.cookies["user_id"]] };
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.session.user_id] };
   res.render("urls_show", templateVars);
 });
 
@@ -162,7 +158,7 @@ app.get("/u/:shortURL", (req, res) => {
 // GET login route. Renders a login page to the user
 app.get("/login", (req, res) => {
   // if a user isn't logged in, they'll be redirected back to /urls
-  if (req.cookies["user_id"]) {
+  if (req.session.user_id) {
     res.redirect("/urls");
   } else {
     const templateVars = { user: null };
@@ -184,7 +180,7 @@ app.post("/login", (req, res) => {
 
   // if email matches with a user, compare that the password on file matches with the existing user's password saved. If it doesn't match, return 403 status code
   if (user && bcrypt.compareSync(password, user.password)) {
-    res.cookie("user_id", user.id);
+    req.session.user_id = user.id;
   } else {
     return res.status(403).send("403 Error: The password doesn't match with what we have on file!");
   }
@@ -194,14 +190,14 @@ app.post("/login", (req, res) => {
 
 // POST route (logout) clears the cookie variable and redirects back to the homepage
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session["user_id"] = null;
   res.redirect("/urls");
 });
 
 // GET route takes users to the registration page 
 app.get("/register", (req, res) => {
   // if a there's a user that hasn't been registered, they'll be directed to the registration page
-  if (req.cookies["user_id"]) {
+  if (req.session.user_id) {
     res.redirect("/urls");
   } else {
     const templateVars = { user:null };
@@ -226,7 +222,7 @@ app.post("/register", (req, res) => {
     users[newUserID] = { id: newUserID, email, password: bcrypt.hashSync(password, 10) }; //hashing the password
   };
   
-  res.cookie("user_id", newUserID);
+  req.session.user_id = newUserID;
   res.redirect("/urls");
 });
 
