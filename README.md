@@ -20,6 +20,7 @@ Tinyapp is a full stack web application that was built using Node and Express th
 - body-paser
 - bcrypt
 - cookie-session
+- uuid
 
 ## Getting Started
 
