@@ -20,17 +20,4 @@ function urlsForUser(ID, urlDatabase) {
   return userURLs;
 };
 
-// a function that generates a random 6 character string
-function generateRandomString() {
-  const numCharSet = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  const length = 6;
-  let randomStr = "";
-
-  for (let i = 0; i < length; i++) {
-    let output = Math.floor(Math.random() * numCharSet.length);
-    randomStr += numCharSet.substring(output, output + 1);
-  }
-  return randomStr;
-};
-
 module.exports = { getUserByEmail, generateRandomString, urlsForUser };
