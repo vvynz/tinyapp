@@ -2,14 +2,15 @@ const cookieSession = require('cookie-session')
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
-const { getUserByEmail, generateRandomString, urlsForUser } = require("./helpers");
+const { getUserByEmail, urlsForUser } = require("./helpers");
 
 app.set("view engine", "ejs"); //sets ejs as the view(templating) engine
 
 const bodyParser = require("body-parser"); //bodyParser is need to make certain data readable to humans.
 const { response } = require("express");
 app.use(bodyParser.urlencoded({extended: true}));
-const bcrypt = require('bcryptjs');
+const bcrypt = require("bcryptjs");
+const { uuid } = require("uuidv4");
 
 app.use(cookieSession({
   name: 'session',
@@ -56,7 +57,7 @@ app.get("/urls", (req, res) => {
 
 app.post("/urls", (req, res) => {
  
-  const randomURL = generateRandomString(); //generates a random string as the new random shortURL
+  const randomURL = uuid().substr(0, 6); //generates a random string as the new random shortURL
   const userID = req.session.user_id;
   urlDatabase[randomURL] = { longURL:req.body.longURL, userID }; //add the new key and value to the URLDatabase
   
@@ -208,7 +209,7 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) => {
   // an new ID will be generated once a user registers
-  const newUserID = generateRandomString();
+  const newUserID = uuid().substr(0, 6);
   const email = req.body.email;
   const password = req.body.password;
  
