@@ -4,13 +4,13 @@ Tinyapp is a full stack web application that was built using Node and Express th
 
 ## Previews
 
-!["Screenshot of URL login page message"](https://github.com/vvynz/tinyapp/blob/master/images/tinyapp_index.png)
+!["Screenshot of URL login page message"](https://github.com/vvynz/tinyapp/blob/master/docs/tinyapp_index.png)
 
-!["Screenshot of the registration page"](https://github.com/vvynz/tinyapp/blob/master/images/tinyapp_registration.png)
+!["Screenshot of the registration page"](https://github.com/vvynz/tinyapp/blob/master/docs/tinyapp_registration.png)
 
-!["Screenshot of the user login page"](https://github.com/vvynz/tinyapp/blob/master/images/tinyapp_login.png)
+!["Screenshot of the user login page"](https://github.com/vvynz/tinyapp/blob/master/docs/tinyapp_login.png)
 
-!["Screenshot of the user's urls page"](https://github.com/vvynz/tinyapp/blob/master/images/tinyapp_urls.png)
+!["Screenshot of the user's urls page"](https://github.com/vvynz/tinyapp/blob/master/docs/tinyapp_urls.png)
 
 ## Dependencies
 
