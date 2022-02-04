@@ -8,13 +8,13 @@ app.set("view engine", "ejs"); //sets ejs as the view(templating) engine
 
 const bodyParser = require("body-parser"); //bodyParser is need to make certain data readable to humans.
 const { response } = require("express");
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 const bcrypt = require("bcryptjs");
 const { uuid } = require("uuidv4");
 
 app.use(cookieSession({
   name: 'session',
-  keys: ["18bb8256-6b75-49d5-828f-0f17e88dd1a2", "8e1724f3-a847-4693-a2a4-b8d11e5ef825" ],
+  keys: ["18bb8256-6b75-49d5-828f-0f17e88dd1a2", "8e1724f3-a847-4693-a2a4-b8d11e5ef825"],
 }))
 
 let urlDatabase = {
@@ -36,32 +36,35 @@ let users = {
   }
 };
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
-
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
 // route added for /urls
 app.get("/urls", (req, res) => {
-  const id = req.session.user_id;
-  // const userURLs = urlsForUser(id, urlDatabase);
-
-  // if the URLs match to the id, then render the page with their URLs
-  const templateVars = { urls: urlDatabase, user: users[id] };
-  res.render("urls_index", templateVars); //passes the url data to our template
-    
+  if (req.session.user_id) {
+    const id = req.session.user_id;
+    const userURLs = urlsForUser(id, urlDatabase);
+    // if the URLs match to the id in the database, then render the page with their URLs
+    const templateVars = { urls: userURLs, user: users[id] };
+    res.render("urls_index", templateVars); //passes the url data to our template
+  } else {
+    // if no user is found, they're re-directed to the login page
+    res.redirect("/login");
+  }
 });
 
 app.post("/urls", (req, res) => {
- 
   const randomURL = uuid().substr(0, 6); //generates a random string as the new random shortURL
   const userID = req.session.user_id;
-  urlDatabase[randomURL] = { longURL:req.body.longURL, userID }; //add the new key and value to the URLDatabase
-  
-  res.redirect(`/urls/${randomURL}`); //redirect to the new page
+  urlDatabase[randomURL] = { longURL: req.body.longURL, userID }; //add the new key and value to the URLDatabase
+
+  if (!userID) {
+    res.redirect("/login");
+  } else {
+    res.redirect(`/urls/${randomURL}`); //redirect to the new page
+  }
+
 });
 
 // this route renders the urls_new template in the browser and displays the form to the user
@@ -202,7 +205,7 @@ app.get("/register", (req, res) => {
     res.redirect("/urls");
   } else {
     // if a there's a user that hasn't been registered, they'll be directed to the registration page
-    const templateVars = { user:null };
+    const templateVars = { user: null };
     res.render("urls_registration", templateVars);
   }
 });
@@ -212,7 +215,7 @@ app.post("/register", (req, res) => {
   const newUserID = uuid().substr(0, 6);
   const email = req.body.email;
   const password = req.body.password;
- 
+
   if (!email || !password) { //if no email or password are entered, then an error message will be returned
     res.status(400).send("Please enter in an email and a password!");
   };
@@ -224,8 +227,12 @@ app.post("/register", (req, res) => {
     //newly registered user's email, password and user ID will be saved into our users obj
     users[newUserID] = { id: newUserID, email, password: bcrypt.hashSync(password, 10) }; //hashing the password
   };
-  
+
   // save the user_id as a cookie and redirect back to /urls
   req.session.user_id = newUserID;
   res.redirect("/urls");
+});
+
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
 });
